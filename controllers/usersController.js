@@ -10,7 +10,7 @@ const { restart } = require("nodemon");
 
 const getAllUsers = asyncHandler(async (req, res) => {
   const users = await User.find().select("-password").lean();
-  if (!users) {
+  if (!users.length) {
     return res.status(400).json({ message: "no users found" });
   }
   res.json(users);
@@ -85,11 +85,11 @@ const updateUser = asyncHandler(async (req, res) => {
   user.roles = roles;
   user.active = active;
 
-  if (pasword) {
+  if (password) {
     //hash password
     user.password = await bcrypt.hash(password, 10); //salt rounds
   }
-  const updatedUser = await User.save();
+  const updatedUser = await user.save();
 
   res.json({ message: `${updatedUser.username} updated` });
 });
@@ -102,8 +102,8 @@ const deleteUser = asyncHandler(async (req, res) => {
   if (!id) {
     return res.status(400).json({ message: "user id required" });
   }
-  const notes = await Note.findOne({ user: id }).lean().exec();
-  if (notes?.length) {
+  const note = await Note.findOne({ user: id }).lean().exec();
+  if (note) {
     return res.status(400).json({ message: "user has assigned notes" });
   }
   const user = await User.findById(id).exec();
